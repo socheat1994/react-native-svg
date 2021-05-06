@@ -17,15 +17,6 @@
  */
 static CGFloat idealFlatness = (CGFloat).01;
 
-/**
- * returns the distance between two points
- */
-CGFloat distance(CGPoint p1, CGPoint p2)
-{
-    CGFloat dx = p2.x - p1.x;
-    CGFloat dy = p2.y - p1.y;
-    return hypot(dx, dy);
-}
 
 // Subdivide a Bézier (specific division)
 /*
@@ -85,10 +76,20 @@ void subdivideBezierAtT(const CGPoint bez[4], CGPoint bez1[4], CGPoint bez2[4], 
 }
 
 @implementation RNSVGPathMeasure
+  
+  /**
+* returns the distance between two points
+*/
++(CGFloat) distanceFrom:(CGPoint) p1 to:(CGPoint) p2 {
+    CGFloat dx = p2.x - p1.x;
+    CGFloat dy = p2.y - p1.y;
+    return hypot(dx, dy);
+}
+
 
 - (void)addLine:(CGPoint *)last next:(const CGPoint *)next {
     NSArray *line = @[[NSValue valueWithCGPoint:*last], [NSValue valueWithCGPoint:*next]];
-    _pathLength += distance(*last, *next);
+    _pathLength += [RNSVGPathMeasure distanceFrom:*last to:*next];
     [_lengths addObject:[NSNumber numberWithDouble:_pathLength]];
     [_lines addObject:line];
     *last = *next;
@@ -152,10 +153,11 @@ void subdivideBezierAtT(const CGPoint bez[4], CGPoint bez1[4], CGPoint bez2[4], 
                     CGPoint ctrl1 = bez[1];
                     CGPoint ctrl2 = bez[2];
                     CGPoint next = bez[3];
-                    CGFloat polyLen =
-                        distance(last, ctrl1) +
-                        distance(ctrl1, ctrl2) +
-                        distance(ctrl2, next);
+                    CGFloat polyLen =                        
+                        [RNSVGPathMeasure distanceFrom:last to:ctrl1] +
+                        [RNSVGPathMeasure distanceFrom:ctrl1 to:ctrl2] +
+                        [RNSVGPathMeasure distanceFrom:ctrl2 to:next];
+                    CGFloat chordLen = [RNSVGPathMeasure distanceFrom:last to:next];
                     CGFloat chordLen = distance(last, next);
                     CGFloat error = polyLen - chordLen;
 
